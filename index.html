@@ -38,6 +38,7 @@
       display:flex;
       gap:14px;
       justify-content:center;
+      align-items:center;
       margin-top:18px;
     }
 
@@ -51,6 +52,7 @@
       box-shadow:0 10px 25px rgba(0,0,0,.10);
       user-select:none;
       -webkit-tap-highlight-color: transparent;
+      transition:none !important; /* inga glidiga effekter */
     }
 
     #yes{
@@ -59,19 +61,24 @@
       box-shadow:0 10px 25px rgba(255,59,122,.30);
     }
 
-    /* No börjar HELT normalt */
+    /* Den här knappen ska ALLTID ligga bredvid Yes i layouten */
     #no{
       background:#f2f2f2;
       color:#333;
-      position:relative;
-      transition:none !important;
+      position:relative; /* aldrig fixed här */
     }
 
-    /* Efter flykt */
-    #no.flee{
+    /* Klonen som hoppar runt */
+    .no-clone{
+      background:#f2f2f2;
+      color:#333;
       position:fixed;
-      z-index:999;
+      left:0;
+      top:0;
+      z-index:9999;
       transform:none !important;
+      transition:none !important;
+      will-change:left, top;
     }
 
     #message{
@@ -85,11 +92,10 @@
 </head>
 
 <body>
-
   <div class="card">
     <h1>Will you be my valentine?</h1>
 
-    <div class="buttons" id="buttons">
+    <div class="buttons">
       <button id="yes">Yes 💞</button>
       <button id="no">No</button>
     </div>
@@ -102,57 +108,66 @@
     const yesBtn = document.getElementById("yes");
     const msg = document.getElementById("message");
 
-    let escaped = false;
+    let noClone = null;
 
-    function teleportNo() {
-      // Första gången: lås fast exakt där den står
-      if (!escaped) {
-        const rect = noBtn.getBoundingClientRect();
+    function randomPos(el) {
+      const rect = el.getBoundingClientRect();
+      const pad = 16;
 
-        // Vänta EN tick så layouten är klar
-        setTimeout(() => {
-          noBtn.classList.add("flee");
-          noBtn.style.left = rect.left + "px";
-          noBtn.style.top  = rect.top  + "px";
-        }, 0);
+      const maxX = Math.max(pad, window.innerWidth - rect.width - pad);
+      const maxY = Math.max(pad, window.innerHeight - rect.height - pad);
 
-        escaped = true;
-        return;
-      }
+      const x = Math.floor(Math.random() * (maxX - pad + 1) + pad);
+      const y = Math.floor(Math.random() * (maxY - pad + 1) + pad);
 
-      // Efter första flykten: hoppa runt
-      const rect = noBtn.getBoundingClientRect();
-      const padding = 20;
-
-      const maxX = window.innerWidth - rect.width - padding;
-      const maxY = window.innerHeight - rect.height - padding;
-
-      const x = Math.random() * maxX + padding;
-      const y = Math.random() * maxY + padding;
-
-      noBtn.style.left = x + "px";
-      noBtn.style.top  = y + "px";
+      el.style.left = x + "px";
+      el.style.top  = y + "px";
     }
 
-    // Fly direkt vid försök
-    noBtn.addEventListener("mouseenter", teleportNo);
-    noBtn.addEventListener("mousedown", teleportNo);
+    function spawnCloneIfNeeded() {
+      if (noClone) return;
 
-    // Mobil
-    noBtn.addEventListener("touchstart", (e) => {
-      e.preventDefault();
-      teleportNo();
-    }, { passive:false });
+      // 1) mät EXAKT var original-knappen är i layouten
+      const r = noBtn.getBoundingClientRect();
 
-    noBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      teleportNo();
-    });
+      // 2) gör original osynlig men låt den ligga kvar (layouten ändras inte)
+      noBtn.style.visibility = "hidden";
 
-    // Yes = vinst
+      // 3) skapa en klon som vi kan teleportera runt
+      noClone = document.createElement("button");
+      noClone.className = "no-clone";
+      noClone.textContent = "No";
+      document.body.appendChild(noClone);
+
+      // 4) placera klonen exakt där originalet stod (bredvid Yes)
+      noClone.style.left = r.left + "px";
+      noClone.style.top  = r.top  + "px";
+
+      // 5) event: fly när man försöker interagera
+      const flee = (e) => {
+        e.preventDefault();
+        randomPos(noClone);
+      };
+
+      noClone.addEventListener("mouseenter", flee);
+      noClone.addEventListener("mousedown", flee);
+      noClone.addEventListener("click", flee);
+      noClone.addEventListener("touchstart", (e) => { e.preventDefault(); flee(e); }, { passive:false });
+    }
+
+    // När man närmar sig originalet första gången, byt till klon-läget
+    noBtn.addEventListener("mouseenter", spawnCloneIfNeeded);
+    noBtn.addEventListener("mousedown", (e) => { e.preventDefault(); spawnCloneIfNeeded(); });
+    noBtn.addEventListener("touchstart", (e) => { e.preventDefault(); spawnCloneIfNeeded(); }, { passive:false });
+    noBtn.addEventListener("click", (e) => { e.preventDefault(); spawnCloneIfNeeded(); });
+
+    // Yes = visa meddelande och städa upp
     yesBtn.addEventListener("click", () => {
       yesBtn.disabled = true;
+
+      // döda No (både original och klon)
       noBtn.style.display = "none";
+      if (noClone) noClone.remove();
 
       msg.style.display = "block";
       msg.textContent =
@@ -163,10 +178,8 @@ nu är det officiellt Jag är din Valentine som du bad mig att fråga.
 Jag är så otroligt glad att det är just du.
 Tack för att du gör mitt liv roligare, tryggare och finare varje dag.
 
-Glad Alla hjärtans dag 💞, älskar dig mest av allt,
-Nu får du vänta tills den 14:e februari för en underbar och romantisk dag!`;
+Glad Alla hjärtans dag 💞, älskar dig mest av allt, Nu får du vänta tills den 14:e februari för en underbar ovh romantisk dag!.`;
     });
   </script>
-
 </body>
 </html>
