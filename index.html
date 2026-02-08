@@ -40,17 +40,23 @@
       -webkit-tap-highlight-color: transparent;
     }
     button:active{ transform: scale(.98); }
+
     #yes{
       background:#ff3b7a; color:white;
       box-shadow: 0 10px 25px rgba(255,59,122,.30);
     }
+
+    /* No = pingpongboll-ish */
     #no{
       background:#f2f2f2; color:#333;
-      position: fixed; /* important: lets it move anywhere */
-      left: 50%;
-      top: 60%;
-      transform: translate(-50%, -50%);
+      position: fixed;
+      left: 120px;
+      top: 140px;
+      border-radius:999px;
+      will-change: transform, left, top;
+      z-index: 3; /* över hjärtan */
     }
+
     #message{
       margin-top:16px;
       font-size:18px;
@@ -58,11 +64,7 @@
       white-space:pre-line;
       display:none;
     }
-    .tiny{
-      opacity:.75;
-      font-size:13px;
-      margin-top:10px;
-    }
+
     .hearts{
       position:fixed; inset:0;
       pointer-events:none;
@@ -90,12 +92,10 @@
 
     <div class="buttons">
       <button id="yes">Yes 💞</button>
-      <!-- "No" is positioned fixed so it can run away -->
       <button id="no">No</button>
     </div>
 
     <div id="message"></div>
-    <div class="tiny">Made with questionable ethics but excellent taste.</div>
   </div>
 
   <script>
@@ -117,51 +117,58 @@
     const yesBtn = document.getElementById("yes");
     const msg = document.getElementById("message");
 
-    function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
+    // Pingpong-rörelse (synlig, konstant studs)
+    let x = 120;
+    let y = 140;
+    let vx = 2.8;  // hastighet x-led
+    let vy = 2.4;  // hastighet y-led
 
-    function moveNoButton() {
-      const padding = 16;
+    function animateNo() {
+      if (yesBtn.disabled) return; // sluta när Yes klickats
 
-      // button size (needs to be measured)
       const rect = noBtn.getBoundingClientRect();
 
-      const maxX = window.innerWidth - rect.width - padding;
-      const maxY = window.innerHeight - rect.height - padding;
+      x += vx;
+      y += vy;
 
-      const x = Math.random() * maxX + padding;
-      const y = Math.random() * maxY + padding;
+      // Studsa mot kanterna (med liten marginal)
+      const pad = 6;
 
-      noBtn.style.left = `${x}px`;
-      noBtn.style.top = `${y}px`;
-      noBtn.style.transform = `translate(0, 0)`;
+      if (x <= pad) {
+        x = pad;
+        vx *= -1;
+      } else if (x + rect.width >= window.innerWidth - pad) {
+        x = window.innerWidth - rect.width - pad;
+        vx *= -1;
+      }
+
+      if (y <= pad) {
+        y = pad;
+        vy *= -1;
+      } else if (y + rect.height >= window.innerHeight - pad) {
+        y = window.innerHeight - rect.height - pad;
+        vy *= -1;
+      }
+
+      noBtn.style.left = x + "px";
+      noBtn.style.top = y + "px";
+
+      requestAnimationFrame(animateNo);
     }
+    animateNo();
 
-    // Make "No" flee when approached
-    function flee(e) {
-      // If user already clicked Yes, stop the chaos
-      if (yesBtn.disabled) return;
-      moveNoButton();
-    }
-
-    // Desktop: mouse approach
-    noBtn.addEventListener("mouseenter", flee);
-
-    // Mobile: finger approach (touchstart fires before click)
-    noBtn.addEventListener("touchstart", (e) => {
-      e.preventDefault(); // prevents accidental click
-      flee();
-    }, { passive: false });
-
-    // Also flee if someone somehow manages to click it
+    // Om någon försöker klicka No: gör den lite snabbare (småaktigt men effektivt)
     noBtn.addEventListener("click", (e) => {
       e.preventDefault();
-      flee();
+      vx *= 1.15;
+      vy *= 1.15;
     });
 
-    // Yes button: show cute message
+    // Yes: visa ditt meddelande på svenska
     yesBtn.addEventListener("click", () => {
       yesBtn.disabled = true;
-      noBtn.style.display = "none"; // the illusion of choice is over
+      noBtn.style.display = "none";
+
       msg.style.display = "block";
       msg.textContent =
 `JAAA!! 💖
@@ -171,9 +178,9 @@ nu är det officiellt Jag är din Valentine som du bad mig att fråga.
 Jag är så otroligt glad att det är just du.
 Tack för att du gör mitt liv roligare, tryggare och finare varje dag.
 
-Glad Alla hjärtans dag 💞, älskar dig mest av allt, Nu får du vänta tills den 14:e februari för en underbar ovh romantisk dag!`;
+Glad Alla hjärtans dag 💞, älskar dig mest av allt, Nu får du vänta tills den 14:e februari för en underbar ovh romantisk dag!.`;
 
-      // optional: gentle heart burst by adding more hearts
+      // Extra hjärt-regn efter ja (lite mer fest)
       for (let i = 0; i < 10; i++) {
         const s = document.createElement("div");
         s.className = "heart";
@@ -185,9 +192,6 @@ Glad Alla hjärtans dag 💞, älskar dig mest av allt, Nu får du vänta tills 
         hearts.appendChild(s);
       }
     });
-
-    // Start with "No" somewhere slightly off-center
-    moveNoButton();
   </script>
 </body>
 </html>
