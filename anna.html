@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>💘 Valentine?</title>
+  <style>
+    body{
+      margin:0; min-height:100vh; display:grid; place-items:center;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: linear-gradient(180deg, #fff1f7, #ffffff);
+      overflow:hidden;
+    }
+    .card{
+      width:min(560px, 92vw);
+      background:#ffffffcc;
+      border:1px solid #ffd3e6;
+      border-radius:24px;
+      padding:28px 22px;
+      box-shadow: 0 18px 60px rgba(0,0,0,.10);
+      text-align:center;
+      backdrop-filter: blur(8px);
+      position:relative;
+      z-index:2;
+    }
+    h1{ margin:0 0 16px; font-size: clamp(28px, 4vw, 44px); }
+    .buttons{
+      display:flex; gap:14px; justify-content:center; flex-wrap:wrap;
+      margin-top: 18px;
+    }
+    button{
+      border:0; border-radius:999px;
+      padding: 12px 20px;
+      font-weight:800;
+      cursor:pointer;
+      font-size:16px;
+      box-shadow: 0 10px 25px rgba(0,0,0,.10);
+      transition: transform .08s ease;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    button:active{ transform: scale(.98); }
+    #yes{
+      background:#ff3b7a; color:white;
+      box-shadow: 0 10px 25px rgba(255,59,122,.30);
+    }
+    #no{
+      background:#f2f2f2; color:#333;
+      position: fixed; /* important: lets it move anywhere */
+      left: 50%;
+      top: 60%;
+      transform: translate(-50%, -50%);
+    }
+    #message{
+      margin-top:16px;
+      font-size:18px;
+      line-height:1.5;
+      white-space:pre-line;
+      display:none;
+    }
+    .tiny{
+      opacity:.75;
+      font-size:13px;
+      margin-top:10px;
+    }
+    .hearts{
+      position:fixed; inset:0;
+      pointer-events:none;
+      z-index:1;
+    }
+    .heart{
+      position:absolute;
+      font-size: 22px;
+      opacity:.85;
+      animation: floatUp linear infinite;
+      filter: drop-shadow(0 6px 10px rgba(0,0,0,.08));
+    }
+    @keyframes floatUp{
+      from { transform: translateY(40vh) rotate(0deg); opacity:0; }
+      10% { opacity:.9; }
+      to   { transform: translateY(-70vh) rotate(360deg); opacity:0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="hearts" id="hearts"></div>
+
+  <div class="card">
+    <h1>Will you be my valentine?</h1>
+
+    <div class="buttons">
+      <button id="yes">Yes 💞</button>
+      <!-- "No" is positioned fixed so it can run away -->
+      <button id="no">No</button>
+    </div>
+
+    <div id="message"></div>
+    <div class="tiny">Made with questionable ethics but excellent taste.</div>
+  </div>
+
+  <script>
+    // Floating hearts background
+    const hearts = document.getElementById("hearts");
+    const heartEmojis = ["💗","💖","💘","💝","💕","💞","❤️"];
+    for (let i = 0; i < 18; i++) {
+      const s = document.createElement("div");
+      s.className = "heart";
+      s.textContent = heartEmojis[Math.floor(Math.random()*heartEmojis.length)];
+      s.style.left = Math.random() * 100 + "vw";
+      s.style.animationDuration = (6 + Math.random()*7) + "s";
+      s.style.animationDelay = (Math.random()*6) + "s";
+      s.style.fontSize = (18 + Math.random()*18) + "px";
+      hearts.appendChild(s);
+    }
+
+    const noBtn = document.getElementById("no");
+    const yesBtn = document.getElementById("yes");
+    const msg = document.getElementById("message");
+
+    function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
+
+    function moveNoButton() {
+      const padding = 16;
+
+      // button size (needs to be measured)
+      const rect = noBtn.getBoundingClientRect();
+
+      const maxX = window.innerWidth - rect.width - padding;
+      const maxY = window.innerHeight - rect.height - padding;
+
+      const x = Math.random() * maxX + padding;
+      const y = Math.random() * maxY + padding;
+
+      noBtn.style.left = `${x}px`;
+      noBtn.style.top = `${y}px`;
+      noBtn.style.transform = `translate(0, 0)`;
+    }
+
+    // Make "No" flee when approached
+    function flee(e) {
+      // If user already clicked Yes, stop the chaos
+      if (yesBtn.disabled) return;
+      moveNoButton();
+    }
+
+    // Desktop: mouse approach
+    noBtn.addEventListener("mouseenter", flee);
+
+    // Mobile: finger approach (touchstart fires before click)
+    noBtn.addEventListener("touchstart", (e) => {
+      e.preventDefault(); // prevents accidental click
+      flee();
+    }, { passive: false });
+
+    // Also flee if someone somehow manages to click it
+    noBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      flee();
+    });
+
+    // Yes button: show cute message
+    yesBtn.addEventListener("click", () => {
+      yesBtn.disabled = true;
+      noBtn.style.display = "none"; // the illusion of choice is over
+      msg.style.display = "block";
+      msg.textContent =
+`Yaaay!! 💖
+
+Anna, you just made my day.
+I’m so lucky to have you.
+Happy Valentine’s Day! 💞`;
+
+      // optional: gentle heart burst by adding more hearts
+      for (let i = 0; i < 10; i++) {
+        const s = document.createElement("div");
+        s.className = "heart";
+        s.textContent = heartEmojis[Math.floor(Math.random()*heartEmojis.length)];
+        s.style.left = Math.random() * 100 + "vw";
+        s.style.animationDuration = (4 + Math.random()*5) + "s";
+        s.style.animationDelay = "0s";
+        s.style.fontSize = (20 + Math.random()*22) + "px";
+        hearts.appendChild(s);
+      }
+    });
+
+    // Start with "No" somewhere slightly off-center
+    moveNoButton();
+  </script>
+</body>
+</html>
