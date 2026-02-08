@@ -50,13 +50,8 @@
       font-size:16px;
       cursor:pointer;
       box-shadow:0 10px 25px rgba(0,0,0,.10);
-      transition:transform .08s ease;
       user-select:none;
       -webkit-tap-highlight-color: transparent;
-    }
-
-    button:active{
-      transform:scale(.97);
     }
 
     #yes{
@@ -73,6 +68,7 @@
       top:60%;
       transform:translate(-50%, -50%);
       z-index:3;
+      transition:none; /* EXTREMT VIKTIGT: ingen glidning */
     }
 
     #message{
@@ -140,8 +136,7 @@
     const yesBtn = document.getElementById("yes");
     const msg = document.getElementById("message");
 
-    // Flytta No-knappen när man närmar sig
-    function moveNoButton() {
+    function teleportNo() {
       const rect = noBtn.getBoundingClientRect();
       const padding = 20;
 
@@ -156,22 +151,22 @@
       noBtn.style.transform = "translate(0,0)";
     }
 
-    // Desktop
-    noBtn.addEventListener("mouseenter", moveNoButton);
+    // Fly direkt vid försök
+    noBtn.addEventListener("mouseenter", teleportNo);
+    noBtn.addEventListener("mousedown", teleportNo);
 
     // Mobil
     noBtn.addEventListener("touchstart", (e) => {
       e.preventDefault();
-      moveNoButton();
+      teleportNo();
     }, { passive:false });
 
-    // Säkerhetsnät
     noBtn.addEventListener("click", (e) => {
       e.preventDefault();
-      moveNoButton();
+      teleportNo();
     });
 
-    // Yes = vinst
+    // Yes = kärlek
     yesBtn.addEventListener("click", () => {
       yesBtn.disabled = true;
       noBtn.style.display = "none";
